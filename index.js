@@ -34,6 +34,7 @@ async function init() {
 		});
 	}
 
+	bot.once("ready", () => console.log("Bot Started"));
 	bot.connect();
 }
 init();
