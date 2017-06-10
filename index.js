@@ -102,7 +102,7 @@ bot.on("messageReactionAdd", async (message, emoji, userID) => {
 	if(message.channel.id === settings.suggest && isAdmin) {
 		let data = await getData(message.id);
 		await deleteData(message.id);
-		await message.delete();
+		await bot.deleteMessage(message.channel.id, message.id);
 		if(emoji.name === "✅") {
 			let msg = await bot.createMessage(settings.vote, `<:${data.name}:${data.emojiID}>`);
 			await msg.addReaction("✅");
@@ -119,7 +119,7 @@ bot.on("messageReactionAdd", async (message, emoji, userID) => {
 			if(!isAdmin) return;
 			let data = await getData(message.id);
 			await deleteData(message.id);
-			await message.delete();
+			await bot.deleteMessage(message.channel.id, message.id);
 
 			await bot.createMessage(settings.changes, `Accepted <:${data.name}:${data.emojiID}>`);
 			if(data.user) bot.addGuildMemberRole(settings.server, userID, settings.artist);
@@ -127,12 +127,15 @@ bot.on("messageReactionAdd", async (message, emoji, userID) => {
 			if(!isAdmin) return;
 			let data = await getData(message.id);
 			await deleteData(message.id);
-			await message.delete();
+			await bot.deleteMessage(message.channel.id, message.id);
 
 			await bot.createMessage(settings.changes, `Denied <:${data.name}:${data.emojiID}> (during vote)`);
 			await bot.deleteGuildEmoji(settings.server, data.emojiID);
 		} else {
-			message.removeReaction(emoji.id ? `${emoji.name}:${emoji.id}` : emoji.name, userID);
+			await bot.removeMessageReaction(message.channel.id,
+				message.id,
+				emoji.id ? `${emoji.name}:${emoji.id}` : emoji.name,
+				userID);
 		}
 	}
 });
