@@ -1,0 +1,30 @@
+{
+  "name": "emoji-manager-bot",
+  "description": "for thinking about things server",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/minemidnight/emoji-manager-bot.git"
+  },
+  "keywords": [
+    "discord",
+    "bot",
+    "eris",
+    "emojis"
+  ],
+  "author": "minemidnight",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/minemidnight/emoji-manager-bot/issues"
+  },
+  "homepage": "https://github.com/minemidnight/emoji-manager-bot#readme",
+  "dependencies": {
+    "bluebird": "^3.5.0",
+    "eris": "^0.7.0",
+    "eris-additions": "^1.2.5",
+    "superagent": "^3.5.2"
+  }
+}
