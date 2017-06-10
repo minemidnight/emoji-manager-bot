@@ -98,7 +98,7 @@ bot.on("messageCreate", async message => {
 });
 
 bot.on("messageReactionAdd", async (message, emoji, userID) => {
-	let isAdmin = bot.guilds.get(settings.server).members.get(userID).roles.indexOf(settings.admin);
+	let isAdmin = ~bot.guilds.get(settings.server).members.get(userID).roles.indexOf(settings.admin);
 	if(message.channel.id === settings.suggest && isAdmin) {
 		let data = await getData(message.id);
 		await deleteData(message.id);
