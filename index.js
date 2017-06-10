@@ -34,7 +34,10 @@ async function init() {
 		});
 	}
 
-	bot.once("ready", () => console.log("Bot Started"));
+	bot.once("ready", () => {
+		console.log("Bot Started");
+		bot.editStatus("online", { name: "with thinking things" });
+	});
 	bot.connect();
 }
 init();
