@@ -87,13 +87,13 @@ bot.on("messageCreate", async message => {
 		await addData({ id: msg.id, emojiID: emoji.id, name: emoji.name, user: message.author.id, type: "approval" });
 	} else if(message.channel.id === settings.vote) {
 		await message.delete();
-		let emoji = message.content.match(/<:[A-Z0-9_]{2,32}:(\d{14,20}>)/i);
+		let emoji = message.content.match(/<:[A-Z0-9_]{2,32}:(\d{14,20})>/i);
 		if(!emoji) return;
 
 		let msg = await message.channel.createMessage(emoji[0]);
 		await msg.addReaction("✅");
 		await msg.addReaction("❌");
-		await addData({ id: msg.id, emojiID: emoji[1], type: "vote" });
+		await addData({ id: msg.id, emojiID: emoji[1], type: "vote", manual: true });
 	}
 });
 
@@ -121,7 +121,8 @@ bot.on("messageReactionAdd", async (message, emoji, userID) => {
 			await deleteData(message.id);
 			await bot.deleteMessage(message.channel.id, message.id);
 
-			await bot.createMessage(settings.changes, `Accepted <:${data.name}:${data.emojiID}>`);
+			if(data.manual) await bot.createMessage(settings.changes, `Kept <:${data.name}:${data.emojiID}> as an emote`);
+			else await bot.createMessage(settings.changes, `Accepted <:${data.name}:${data.emojiID}>`);
 			if(data.user) bot.addGuildMemberRole(settings.server, userID, settings.artist);
 		} else if(emoji.name === "❌") {
 			if(!isAdmin) return;
@@ -129,7 +130,8 @@ bot.on("messageReactionAdd", async (message, emoji, userID) => {
 			await deleteData(message.id);
 			await bot.deleteMessage(message.channel.id, message.id);
 
-			await bot.createMessage(settings.changes, `Denied <:${data.name}:${data.emojiID}> (during vote)`);
+			if(data.manual) await bot.createMessage(settings.changes, `Deleted <:${data.name}:${data.emojiID}> after a vote`);
+			else await bot.createMessage(settings.changes, `Denied <:${data.name}:${data.emojiID}> (during vote)`);
 			await bot.deleteGuildEmoji(settings.server, data.emojiID);
 		} else {
 			await bot.removeMessageReaction(message.channel.id,
