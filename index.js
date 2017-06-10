@@ -103,7 +103,7 @@ bot.on("messageReactionAdd", async (message, emoji, userID) => {
 			let msg = await bot.createMessage(settings.vote, `<:${data.name}:${data.emojiID}>`);
 			await msg.addReaction("✅");
 			await msg.addReaction("❌");
-			await addData({ id: msg.id, emojiID: emoji[1], type: "vote" });
+			await addData({ id: msg.id, emojiID: emoji[1], type: "vote", user: data.user });
 		} else if(emoji.name === "❌") {
 			await bot.createMessage(settings.changes, `Denied <:${data.name}:${data.emojiID}> (during approval)`);
 			await bot.deleteGuildEmoji(settings.server, data.emojiID);
@@ -117,7 +117,8 @@ bot.on("messageReactionAdd", async (message, emoji, userID) => {
 			await deleteData(message.id);
 			await message.delete();
 
-			let msg = await bot.createMessage(settings.changes, `Accepted <:${data.name}:${data.emojiID}>`);
+			await bot.createMessage(settings.changes, `Accepted <:${data.name}:${data.emojiID}>`);
+			if(data.user) bot.addGuildMemberRole(settings.server, userID, settings.artist);
 		} else if(emoji.name === "❌") {
 			if(!isAdmin) return;
 			let data = await getData(message.id);
