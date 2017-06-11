@@ -27,15 +27,6 @@ async function init() {
 	} else {
 		global.bot = new Eris(process.env.TOKEN, {
 			disableEvents: {
-				GUILD_BAN_ADD: true,
-				GUILD_BAN_REMOVE: true,
-				GUILD_DELETE: true,
-				GUILD_MEMBER_ADD: true,
-				GUILD_MEMBER_REMOVE: true,
-				GUILD_MEMBER_UPDATE: true,
-				GUILD_ROLE_CREATE: true,
-				GUILD_ROLE_DELETE: true,
-				GUILD_ROLE_UPDATE: true,
 				PRESENCE_UPDATE: true,
 				TYPING_START: true,
 				USER_UPDATE: true,
