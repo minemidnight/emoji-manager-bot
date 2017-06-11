@@ -21,13 +21,62 @@ const settings = {
 };
 
 async function init() {
-	if(!process.env.TOKEN) {
-		console.error("No token");
+	if(!process.env.TOKEN || !process.env.USER_TOKEN) {
+		console.error("Both TOKEN and USER_TOKEN must be set as environment variables");
 		process.exit(0);
 	} else {
 		global.bot = new Eris(process.env.TOKEN, {
-			disableEvents: { TYPING_START: true },
-			getAllUsers: true,
+			disableEvents: {
+				CHANNEL_CREATE: true,
+				CHANNEL_DELETE: true,
+				CHANNEL_UPDATE: true,
+				GUILD_BAN_ADD: true,
+				GUILD_BAN_REMOVE: true,
+				GUILD_CREATE: true,
+				GUILD_DELETE: true,
+				GUILD_MEMBER_ADD: true,
+				GUILD_MEMBER_REMOVE: true,
+				GUILD_MEMBER_UPDATE: true,
+				GUILD_ROLE_CREATE: true,
+				GUILD_ROLE_DELETE: true,
+				GUILD_ROLE_UPDATE: true,
+				MESSAGE_DELETE: true,
+				MESSAGE_DELETE_BULK: true,
+				PRESENCE_UPDATE: true,
+				TYPING_START: true,
+				USER_UPDATE: true,
+				VOICE_STATE_UPDATE: true
+			},
+			messageLimit: 0,
+			defaultImageFormat: "png",
+			defaultImageSize: 256
+		});
+
+		global.userbot = new Eris(process.env.USER_TOKEN, {
+			disableEvents: {
+				CHANNEL_CREATE: true,
+				CHANNEL_DELETE: true,
+				CHANNEL_UPDATE: true,
+				GUILD_BAN_ADD: true,
+				GUILD_BAN_REMOVE: true,
+				GUILD_CREATE: true,
+				GUILD_DELETE: true,
+				GUILD_MEMBER_ADD: true,
+				GUILD_MEMBER_REMOVE: true,
+				GUILD_MEMBER_UPDATE: true,
+				GUILD_ROLE_CREATE: true,
+				GUILD_ROLE_DELETE: true,
+				GUILD_ROLE_UPDATE: true,
+				GUILD_UPDATE: true,
+				MESSAGE_CREATE: true,
+				MESSAGE_DELETE: true,
+				MESSAGE_DELETE_BULK: true,
+				MESSAGE_UPDATE: true,
+				PRESENCE_UPDATE: true,
+				TYPING_START: true,
+				USER_UPDATE: true,
+				VOICE_STATE_UPDATE: true
+			},
 			messageLimit: 0,
 			defaultImageFormat: "png",
 			defaultImageSize: 256
@@ -75,7 +124,7 @@ bot.on("messageCreate", async message => {
 		let attach = message.attachments[0];
 		let image = (await superagent.get(attach.url)).body;
 
-		let emoji = await message.channel.guild.createEmoji({
+		let emoji = await userbot.createGuildEmoji(settings.server, {
 			name: attach.filename.substring(0, attach.filename.lastIndexOf(".")),
 			image: `data:image/png;base64,${image.toString("base64")}`
 		});
@@ -110,7 +159,7 @@ bot.on("messageReactionAdd", async (message, emoji, userID) => {
 			await addData({ id: msg.id, emojiID: emoji[1], type: "vote", user: data.user });
 		} else if(emoji.name === "❌") {
 			await bot.createMessage(settings.changes, `Denied <:${data.name}:${data.emojiID}> (during approval)`);
-			await bot.deleteGuildEmoji(settings.server, data.emojiID);
+			await userbot.deleteGuildEmoji(settings.server, data.emojiID);
 		} else {
 			message.removeReaction(emoji.id ? `${emoji.name}:${emoji.id}` : emoji.name, userID);
 		}
@@ -132,7 +181,7 @@ bot.on("messageReactionAdd", async (message, emoji, userID) => {
 
 			if(data.manual) await bot.createMessage(settings.changes, `Deleted <:${data.name}:${data.emojiID}> after a vote`);
 			else await bot.createMessage(settings.changes, `Denied <:${data.name}:${data.emojiID}> (during vote)`);
-			await bot.deleteGuildEmoji(settings.server, data.emojiID);
+			await userbot.deleteGuildEmoji(settings.server, data.emojiID);
 		} else {
 			await bot.removeMessageReaction(message.channel.id,
 				message.id,
