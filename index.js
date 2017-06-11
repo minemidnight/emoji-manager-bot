@@ -101,12 +101,12 @@ bot.on("messageCreate", async message => {
 	else if(message.author.id === bot.user.id) return;
 
 	if(message.channel.id === settings.suggest) {
-		if(!message.attachments.length) {
+		let attach = message.attachments[0];
+		if(!attach || !attach.height || !attach.width) {
 			await message.delete();
 			return;
 		}
 
-		let attach = message.attachments[0];
 		let image = (await superagent.get(attach.url)).body;
 
 		let emoji = await userbot.createGuildEmoji(settings.server, {
