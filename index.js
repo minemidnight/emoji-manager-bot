@@ -26,27 +26,27 @@ async function init() {
 		process.exit(0);
 	} else {
 		global.bot = new Eris(process.env.TOKEN, {
-			disableEvents: {
-				CHANNEL_CREATE: true,
-				CHANNEL_DELETE: true,
-				CHANNEL_UPDATE: true,
-				GUILD_BAN_ADD: true,
-				GUILD_BAN_REMOVE: true,
-				GUILD_CREATE: true,
-				GUILD_DELETE: true,
-				GUILD_MEMBER_ADD: true,
-				GUILD_MEMBER_REMOVE: true,
-				GUILD_MEMBER_UPDATE: true,
-				GUILD_ROLE_CREATE: true,
-				GUILD_ROLE_DELETE: true,
-				GUILD_ROLE_UPDATE: true,
-				MESSAGE_DELETE: true,
-				MESSAGE_DELETE_BULK: true,
-				PRESENCE_UPDATE: true,
-				TYPING_START: true,
-				USER_UPDATE: true,
-				VOICE_STATE_UPDATE: true
-			},
+			// disableEvents: {
+			// 	CHANNEL_CREATE: true,
+			// 	CHANNEL_DELETE: true,
+			// 	CHANNEL_UPDATE: true,
+			// 	GUILD_BAN_ADD: true,
+			// 	GUILD_BAN_REMOVE: true,
+			// 	GUILD_CREATE: true,
+			// 	GUILD_DELETE: true,
+			// 	GUILD_MEMBER_ADD: true,
+			// 	GUILD_MEMBER_REMOVE: true,
+			// 	GUILD_MEMBER_UPDATE: true,
+			// 	GUILD_ROLE_CREATE: true,
+			// 	GUILD_ROLE_DELETE: true,
+			// 	GUILD_ROLE_UPDATE: true,
+			// 	MESSAGE_DELETE: true,
+			// 	MESSAGE_DELETE_BULK: true,
+			// 	PRESENCE_UPDATE: true,
+			// 	TYPING_START: true,
+			// 	USER_UPDATE: true,
+			// 	VOICE_STATE_UPDATE: true
+			// },
 			messageLimit: 0,
 			defaultImageFormat: "png",
 			defaultImageSize: 256
