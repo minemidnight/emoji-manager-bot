@@ -26,27 +26,21 @@ async function init() {
 		process.exit(0);
 	} else {
 		global.bot = new Eris(process.env.TOKEN, {
-			// disableEvents: {
-			// 	CHANNEL_CREATE: true,
-			// 	CHANNEL_DELETE: true,
-			// 	CHANNEL_UPDATE: true,
-			// 	GUILD_BAN_ADD: true,
-			// 	GUILD_BAN_REMOVE: true,
-			// 	GUILD_CREATE: true,
-			// 	GUILD_DELETE: true,
-			// 	GUILD_MEMBER_ADD: true,
-			// 	GUILD_MEMBER_REMOVE: true,
-			// 	GUILD_MEMBER_UPDATE: true,
-			// 	GUILD_ROLE_CREATE: true,
-			// 	GUILD_ROLE_DELETE: true,
-			// 	GUILD_ROLE_UPDATE: true,
-			// 	MESSAGE_DELETE: true,
-			// 	MESSAGE_DELETE_BULK: true,
-			// 	PRESENCE_UPDATE: true,
-			// 	TYPING_START: true,
-			// 	USER_UPDATE: true,
-			// 	VOICE_STATE_UPDATE: true
-			// },
+			disableEvents: {
+				GUILD_BAN_ADD: true,
+				GUILD_BAN_REMOVE: true,
+				GUILD_DELETE: true,
+				GUILD_MEMBER_ADD: true,
+				GUILD_MEMBER_REMOVE: true,
+				GUILD_MEMBER_UPDATE: true,
+				GUILD_ROLE_CREATE: true,
+				GUILD_ROLE_DELETE: true,
+				GUILD_ROLE_UPDATE: true,
+				PRESENCE_UPDATE: true,
+				TYPING_START: true,
+				USER_UPDATE: true,
+				VOICE_STATE_UPDATE: true
+			},
 			messageLimit: 0,
 			defaultImageFormat: "png",
 			defaultImageSize: 256
@@ -156,7 +150,7 @@ bot.on("messageReactionAdd", async (message, emoji, userID) => {
 			let msg = await bot.createMessage(settings.vote, `<:${data.name}:${data.emojiID}>`);
 			await msg.addReaction("✅");
 			await msg.addReaction("❌");
-			await addData({ id: msg.id, emojiID: emoji[1], type: "vote", user: data.user });
+			await addData({ id: msg.id, emojiID: data.emojiID, name: data.name, type: "vote", user: data.user });
 		} else if(emoji.name === "❌") {
 			await bot.createMessage(settings.changes, `Denied <:${data.name}:${data.emojiID}> (during approval)`);
 			await userbot.deleteGuildEmoji(settings.server, data.emojiID);
@@ -172,7 +166,7 @@ bot.on("messageReactionAdd", async (message, emoji, userID) => {
 
 			if(data.manual) await bot.createMessage(settings.changes, `Kept <:${data.name}:${data.emojiID}> as an emote`);
 			else await bot.createMessage(settings.changes, `Accepted <:${data.name}:${data.emojiID}>`);
-			if(data.user) bot.addGuildMemberRole(settings.server, userID, settings.artist);
+			if(data.user) bot.addGuildMemberRole(settings.server, data.user, settings.artist);
 		} else if(emoji.name === "❌") {
 			if(!isAdmin) return;
 			let data = await getData(message.id);
