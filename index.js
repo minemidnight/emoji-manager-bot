@@ -10,116 +10,101 @@ const Eris = require("eris-additions")(require("eris"), {
 	]
 });
 
-const settings = {
-	server: "296819780654989312",
-	artist: "318021790184243202",
-	admin: "297071826331500544",
-	vote: "322957860122263572",
-	suggest: "322957824785383425",
-	data: "322960735397216257",
-	changes: "322971161241845760"
+if(!process.env.TOKEN || !process.env.USER_TOKEN) {
+	console.error("Both TOKEN and USER_TOKEN must be set as environment variables");
+	process.exit(0);
+}
+
+const bot = new Eris(process.env.TOKEN, {
+	disableEvents: {
+		PRESENCE_UPDATE: true,
+		TYPING_START: true,
+		USER_UPDATE: true,
+		VOICE_STATE_UPDATE: true
+	},
+	messageLimit: 0,
+	defaultImageFormat: "png",
+	defaultImageSize: 256
+});
+
+const userbot = new Eris(process.env.USER_TOKEN);
+
+bot.once("ready", () => {
+	console.log("Bot Started");
+	bot.editStatus("online", { name: "with emojis" });
+});
+
+bot.connect();
+
+const data = guild => {
+	const dataChannel = guild.channels.find(channel => channel.name === "bot-data");
+	const settings = Object.assign({ data: dataChannel.id }, JSON.parse(dataChannel.topic));
+
+	return {
+		pluck(...fields) {
+			return fields.reduce((a, b) => {
+				if(settings[b]) a[b] = settings[b];
+				return a;
+			}, {});
+		},
+		async add(json) {
+			const { content } = await bot.createMessage(settings.data, JSON.stringify(json));
+
+			return JSON.parse(content);
+		},
+		async update(id, json) {
+			const msgs = await bot.getMessages(settings.data, 100);
+			const toEdit = msgs.find(msg => JSON.parse(msg.content).id === id);
+
+			const { content } = await toEdit.edit(JSON.stringify(json));
+			return JSON.parse(content);
+		},
+		async get(id) {
+			const msgs = await bot.getMessages(settings.data, 100);
+			return msgs.find(msg => JSON.parse(msg.content).id === id).content;
+		},
+		async delete(id) {
+			const msgs = await bot.getMessages(settings.data, 100);
+			return await Promise.all(
+				msgs.filter(msg => JSON.parse(msg.content).id === id)
+					.map(msg => msg.delete())
+			);
+		}
+	};
 };
 
-async function init() {
-	if(!process.env.TOKEN || !process.env.USER_TOKEN) {
-		console.error("Both TOKEN and USER_TOKEN must be set as environment variables");
-		process.exit(0);
-	} else {
-		global.bot = new Eris(process.env.TOKEN, {
-			disableEvents: {
-				PRESENCE_UPDATE: true,
-				TYPING_START: true,
-				USER_UPDATE: true,
-				VOICE_STATE_UPDATE: true
-			},
-			messageLimit: 0,
-			defaultImageFormat: "png",
-			defaultImageSize: 256
-		});
-
-		global.userbot = new Eris(process.env.USER_TOKEN, {
-			disableEvents: {
-				CHANNEL_CREATE: true,
-				CHANNEL_DELETE: true,
-				CHANNEL_UPDATE: true,
-				GUILD_BAN_ADD: true,
-				GUILD_BAN_REMOVE: true,
-				GUILD_CREATE: true,
-				GUILD_DELETE: true,
-				GUILD_MEMBER_ADD: true,
-				GUILD_MEMBER_REMOVE: true,
-				GUILD_MEMBER_UPDATE: true,
-				GUILD_ROLE_CREATE: true,
-				GUILD_ROLE_DELETE: true,
-				GUILD_ROLE_UPDATE: true,
-				GUILD_UPDATE: true,
-				MESSAGE_CREATE: true,
-				MESSAGE_DELETE: true,
-				MESSAGE_DELETE_BULK: true,
-				MESSAGE_UPDATE: true,
-				PRESENCE_UPDATE: true,
-				TYPING_START: true,
-				USER_UPDATE: true,
-				VOICE_STATE_UPDATE: true
-			},
-			messageLimit: 0,
-			defaultImageFormat: "png",
-			defaultImageSize: 256
-		});
-	}
-
-	bot.once("ready", () => {
-		console.log("Bot Started");
-		bot.editStatus("online", { name: "with thinking things" });
-	});
-	bot.connect();
-}
-init();
-
-async function addData(json) {
-	return JSON.parse((await bot.createMessage(settings.data, JSON.stringify(json))).content);
-}
-
-async function updateData(id, updated) {
-	let msgs = await bot.getMessages(settings.data, 100);
-	let toEdit = msgs.find(msg => JSON.parse(msg.content).id === id);
-	return JSON.parse((await toEdit.edit(JSON.stringify(updated))).content);
-}
-
-async function getData(id) {
-	let msgs = await bot.getMessages(settings.data, 100);
-	return msgs.map(msg => JSON.parse(msg.content)).find(data => data.id === id);
-}
-
-async function deleteData(id) {
-	let msgs = await bot.getMessages(settings.data, 100);
-	return await Promise.all(msgs.filter(msg => JSON.parse(msg.content).id === id).map(msg => msg.delete()));
-}
-
 bot.on("messageCreate", async message => {
-	if(!message.channel.guild || message.channel.guild.id !== settings.server) return;
+	if(!message.channel.guild || !message.channel.guild) return;
 	else if(message.author.id === bot.user.id) return;
 
-	if(message.channel.id === settings.suggest) {
-		let attach = message.attachments[0];
+	const dataController = data(message.channel.guild);
+	if(message.channel.id === dataController.pluck("suggest")) {
+		const [attach] = message.attachments;
 		if(!attach || !attach.height || !attach.width) {
 			await message.delete();
 			return;
 		}
 
-		let image = (await superagent.get(attach.url)).body;
+		const { headers: { "content-type": contentType }, body: image } = await superagent.get(attach.url);
 
-		let emoji = await userbot.createGuildEmoji(settings.server, {
+		const emoji = await userbot.createGuildEmoji(message.channel.guild.id, {
 			name: attach.filename.substring(0, attach.filename.lastIndexOf(".")),
-			image: `data:image/png;base64,${image.toString("base64")}`
+			image: `data:${contentType};base64,${image.toString("base64")}`
 		});
-		let msg = await message.channel.createMessage(`**EMOJI SUGGESTION**\n` +
+
+		const msg = await message.channel.createMessage(`**EMOJI SUGGESTION**\n` +
 				`Creator: ${message.author.mention}\n` +
 				`<:${emoji.name}:${emoji.id}>`);
 
 		await message.delete();
-		await addData({ id: msg.id, emojiID: emoji.id, name: emoji.name, user: message.author.id, type: "approval" });
-	} else if(message.channel.id === settings.vote) {
+		await dataController.add({
+			id: msg.id,
+			emojiID: emoji.id,
+			name: emoji.name,
+			user: message.author.id,
+			type: "approval"
+		});
+	} else if(message.channel.id === dataController.pluck("vote")) {
 		await message.delete();
 		let emoji = message.content.match(/<:[A-Z0-9_]{2,32}:(\d{14,20})>/i);
 		if(!emoji) return;
@@ -127,46 +112,63 @@ bot.on("messageCreate", async message => {
 		let msg = await message.channel.createMessage(emoji[0]);
 		await msg.addReaction("✅");
 		await msg.addReaction("❌");
-		await addData({ id: msg.id, emojiID: emoji[1], type: "vote", manual: true });
+		await dataController.add({
+			id: msg.id,
+			emojiID: emoji[1],
+			type: "vote",
+			manual: true
+		});
 	}
 });
 
 bot.on("messageReactionAdd", async (message, emoji, userID) => {
-	let isAdmin = ~bot.guilds.get(settings.server).members.get(userID).roles.indexOf(settings.admin);
-	if(message.channel.id === settings.suggest && isAdmin) {
-		let data = await getData(message.id);
-		await deleteData(message.id);
+	message = await bot.getMessage(message.channel.id, message.id);
+	const dataController = data(message.guild);
+
+	const isAdmin = ~message.guild.members.get(userID).roles.indexOf(dataController.pluck("admin"));
+	if(message.channel.id === dataController.pluck("suggest") && isAdmin) {
+		const { name, emojiID, user } = await dataController.get(message.id);
+		await dataController.delete(message.id);
 		await bot.deleteMessage(message.channel.id, message.id);
+
 		if(emoji.name === "✅") {
-			let msg = await bot.createMessage(settings.vote, `<:${data.name}:${data.emojiID}>`);
+			let msg = await bot.createMessage(dataController.pluck("vote"), `<:${name}:${emojiID}>`);
 			await msg.addReaction("✅");
 			await msg.addReaction("❌");
-			await addData({ id: msg.id, emojiID: data.emojiID, name: data.name, type: "vote", user: data.user });
+			await dataController.add({
+				id: msg.id,
+				emojiID,
+				name,
+				type: "vote",
+				user
+			});
 		} else if(emoji.name === "❌") {
-			await bot.createMessage(settings.changes, `Denied <:${data.name}:${data.emojiID}> (during approval)`);
-			await userbot.deleteGuildEmoji(settings.server, data.emojiID);
+			await bot.createMessage(dataController.pluck("changes"),
+				`Denied <:${name}:${emojiID}> (during approval)`);
+
+			await userbot.deleteGuildEmoji(message.channel.guild.id, emojiID);
 		} else {
 			message.removeReaction(emoji.id ? `${emoji.name}:${emoji.id}` : emoji.name, userID);
 		}
-	} else if(message.channel.id === settings.vote) {
+	} else if(message.channel.id === dataController.pluck("vote")) {
 		if(emoji.name === "✅") {
 			if(!isAdmin) return;
-			let data = await getData(message.id);
-			await deleteData(message.id);
+			const { emojiID, manual, name, user } = await dataController.get(message.id);
+			await dataController.delete(message.id);
 			await bot.deleteMessage(message.channel.id, message.id);
 
-			if(data.manual) await bot.createMessage(settings.changes, `Kept <:${data.name}:${data.emojiID}> as an emote`);
-			else await bot.createMessage(settings.changes, `Accepted <:${data.name}:${data.emojiID}>`);
-			if(data.user) bot.addGuildMemberRole(settings.server, data.user, settings.artist);
+			if(manual) await bot.createMessage(dataController.pluck("changes"), `Kept <:${name}:${emojiID}> as an emote`);
+			else await bot.createMessage(dataController.pluck("changes"), `Accepted <:${name}:${emojiID}>`);
+			if(user) bot.addGuildMemberRole(message.channel.guild.id, user, dataController.pluck("artist"));
 		} else if(emoji.name === "❌") {
 			if(!isAdmin) return;
-			let data = await getData(message.id);
-			await deleteData(message.id);
+			const { emojiID, manual, name } = await dataController.get(message.id);
+			await dataController.delete(message.id);
 			await bot.deleteMessage(message.channel.id, message.id);
 
-			if(data.manual) await bot.createMessage(settings.changes, `Deleted <:${data.name}:${data.emojiID}> after a vote`);
-			else await bot.createMessage(settings.changes, `Denied <:${data.name}:${data.emojiID}> (during vote)`);
-			await userbot.deleteGuildEmoji(settings.server, data.emojiID);
+			if(manual) await bot.createMessage(dataController.pluck("changes"), `Deleted <:${name}:${emojiID}> after a vote`);
+			else await bot.createMessage(dataController.pluck("changes"), `Denied <:${name}:${emojiID}> (during vote)`);
+			await userbot.deleteGuildEmoji(message.channel.guild.id, emojiID);
 		} else {
 			await bot.removeMessageReaction(message.channel.id,
 				message.id,
