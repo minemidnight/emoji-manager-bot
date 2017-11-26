@@ -79,7 +79,7 @@ bot.on("messageCreate", async message => {
 		const [attach] = message.attachments;
 		const name = attach.filename.substring(0, attach.filename.lastIndexOf("."));
 
-		if(!attach || !attach.height || !attach.width || !name.test(/<:[A-Z0-9_]{2,32}:(\d{14,20})>/i)) {
+		if(!attach || !attach.height || !attach.width || !name.test(/[A-Z0-9_]{2,32}/i)) {
 			await message.delete();
 			return;
 		}
