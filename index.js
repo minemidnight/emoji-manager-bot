@@ -77,21 +77,22 @@ bot.on("messageCreate", async message => {
 	const dataController = data(message.channel.guild);
 	if(message.channel.id === dataController.field("suggest")) {
 		const [attach] = message.attachments;
-		if(!attach || !attach.height || !attach.width) {
+		const name = attach.filename.substring(0, attach.filename.lastIndexOf("."));
+
+		if(!attach || !attach.height || !attach.width || !name.test(/<:[A-Z0-9_]{2,32}:(\d{14,20})>/i)) {
 			await message.delete();
 			return;
 		}
 
 		const { headers: { "content-type": contentType }, body: image } = await superagent.get(attach.url);
-
 		const emoji = await userbot.createGuildEmoji(message.channel.guild.id, {
-			name: attach.filename.substring(0, attach.filename.lastIndexOf(".")),
+			name,
 			image: `data:${contentType};base64,${image.toString("base64")}`
 		});
 
-		const msg = await message.channel.createMessage(`**EMOJI SUGGESTION**\n` +
-				`Creator: ${message.author.mention}\n` +
-				`<:${emoji.name}:${emoji.id}>`);
+		const msg = await message.channel.createMessage("**EMOJI SUGGESTION**\n" +
+			`Creator: ${message.author.mention}\n` +
+			`<:${emoji.name}:${emoji.id}>`);
 
 		await message.delete();
 		await dataController.add({
