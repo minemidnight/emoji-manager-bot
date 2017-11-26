@@ -56,9 +56,9 @@ const data = guild => {
 			const { content } = await toEdit.edit(JSON.stringify(json));
 			return JSON.parse(content);
 		},
-		async get(id) {
+		async get(idSearch) {
 			const msgs = await bot.getMessages(settings.data, 100);
-			return msgs.find(msg => JSON.parse(msg.content).id === id).content;
+			return msgs.map(msg => JSON.parse(msg.content)).find(({ id }) => id === idSearch);
 		},
 		async delete(id) {
 			const msgs = await bot.getMessages(settings.data, 100);
