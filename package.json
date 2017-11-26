@@ -23,7 +23,7 @@
   "homepage": "https://github.com/minemidnight/emoji-manager-bot#readme",
   "dependencies": {
     "bluebird": "^3.5.1",
-    "eris": "^0.7.2",
+    "eris": "^0.8.0",
     "eris-additions": "^1.2.5",
     "superagent": "^3.8.1"
   }
