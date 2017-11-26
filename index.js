@@ -120,7 +120,7 @@ bot.on("messageCreate", async message => {
 
 bot.on("messageReactionAdd", async (message, emoji, userID) => {
 	message = await bot.getMessage(message.channel.id, message.id);
-	const dataController = data(message.guild);
+	const dataController = data(message.channel.guild);
 
 	const isAdmin = ~message.guild.members.get(userID).roles.indexOf(dataController.field("admin"));
 	if(message.channel.id === dataController.field("suggest") && isAdmin) {
