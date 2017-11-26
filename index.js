@@ -41,11 +41,8 @@ const data = guild => {
 	const settings = Object.assign({ data: dataChannel.id }, JSON.parse(dataChannel.topic));
 
 	return {
-		pluck(...fields) {
-			return fields.reduce((a, b) => {
-				if(settings[b]) a[b] = settings[b];
-				return a;
-			}, {});
+		field(field) {
+			return settings[field];
 		},
 		async add(json) {
 			const { content } = await bot.createMessage(settings.data, JSON.stringify(json));
@@ -78,7 +75,7 @@ bot.on("messageCreate", async message => {
 	else if(message.author.id === bot.user.id) return;
 
 	const dataController = data(message.channel.guild);
-	if(message.channel.id === dataController.pluck("suggest")) {
+	if(message.channel.id === dataController.field("suggest")) {
 		const [attach] = message.attachments;
 		if(!attach || !attach.height || !attach.width) {
 			await message.delete();
@@ -104,12 +101,12 @@ bot.on("messageCreate", async message => {
 			user: message.author.id,
 			type: "approval"
 		});
-	} else if(message.channel.id === dataController.pluck("vote")) {
+	} else if(message.channel.id === dataController.field("vote")) {
 		await message.delete();
-		let emoji = message.content.match(/<:[A-Z0-9_]{2,32}:(\d{14,20})>/i);
+		const emoji = message.content.match(/<:[A-Z0-9_]{2,32}:(\d{14,20})>/i);
 		if(!emoji) return;
 
-		let msg = await message.channel.createMessage(emoji[0]);
+		const msg = await message.channel.createMessage(emoji[0]);
 		await msg.addReaction("✅");
 		await msg.addReaction("❌");
 		await dataController.add({
@@ -125,14 +122,14 @@ bot.on("messageReactionAdd", async (message, emoji, userID) => {
 	message = await bot.getMessage(message.channel.id, message.id);
 	const dataController = data(message.guild);
 
-	const isAdmin = ~message.guild.members.get(userID).roles.indexOf(dataController.pluck("admin"));
-	if(message.channel.id === dataController.pluck("suggest") && isAdmin) {
+	const isAdmin = ~message.guild.members.get(userID).roles.indexOf(dataController.field("admin"));
+	if(message.channel.id === dataController.field("suggest") && isAdmin) {
 		const { name, emojiID, user } = await dataController.get(message.id);
 		await dataController.delete(message.id);
 		await bot.deleteMessage(message.channel.id, message.id);
 
 		if(emoji.name === "✅") {
-			let msg = await bot.createMessage(dataController.pluck("vote"), `<:${name}:${emojiID}>`);
+			const msg = await bot.createMessage(dataController.field("vote"), `<:${name}:${emojiID}>`);
 			await msg.addReaction("✅");
 			await msg.addReaction("❌");
 			await dataController.add({
@@ -143,31 +140,31 @@ bot.on("messageReactionAdd", async (message, emoji, userID) => {
 				user
 			});
 		} else if(emoji.name === "❌") {
-			await bot.createMessage(dataController.pluck("changes"),
+			await bot.createMessage(dataController.field("changes"),
 				`Denied <:${name}:${emojiID}> (during approval)`);
 
 			await userbot.deleteGuildEmoji(message.channel.guild.id, emojiID);
 		} else {
 			message.removeReaction(emoji.id ? `${emoji.name}:${emoji.id}` : emoji.name, userID);
 		}
-	} else if(message.channel.id === dataController.pluck("vote")) {
+	} else if(message.channel.id === dataController.field("vote")) {
 		if(emoji.name === "✅") {
 			if(!isAdmin) return;
 			const { emojiID, manual, name, user } = await dataController.get(message.id);
 			await dataController.delete(message.id);
 			await bot.deleteMessage(message.channel.id, message.id);
 
-			if(manual) await bot.createMessage(dataController.pluck("changes"), `Kept <:${name}:${emojiID}> as an emote`);
-			else await bot.createMessage(dataController.pluck("changes"), `Accepted <:${name}:${emojiID}>`);
-			if(user) bot.addGuildMemberRole(message.channel.guild.id, user, dataController.pluck("artist"));
+			if(manual) await bot.createMessage(dataController.field("changes"), `Kept <:${name}:${emojiID}> as an emote`);
+			else await bot.createMessage(dataController.field("changes"), `Accepted <:${name}:${emojiID}>`);
+			if(user) bot.addGuildMemberRole(message.channel.guild.id, user, dataController.field("artist"));
 		} else if(emoji.name === "❌") {
 			if(!isAdmin) return;
 			const { emojiID, manual, name } = await dataController.get(message.id);
 			await dataController.delete(message.id);
 			await bot.deleteMessage(message.channel.id, message.id);
 
-			if(manual) await bot.createMessage(dataController.pluck("changes"), `Deleted <:${name}:${emojiID}> after a vote`);
-			else await bot.createMessage(dataController.pluck("changes"), `Denied <:${name}:${emojiID}> (during vote)`);
+			if(manual) await bot.createMessage(dataController.field("changes"), `Deleted <:${name}:${emojiID}> after a vote`);
+			else await bot.createMessage(dataController.field("changes"), `Denied <:${name}:${emojiID}> (during vote)`);
 			await userbot.deleteGuildEmoji(message.channel.guild.id, emojiID);
 		} else {
 			await bot.removeMessageReaction(message.channel.id,
