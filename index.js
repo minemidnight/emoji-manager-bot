@@ -79,7 +79,7 @@ bot.on("messageCreate", async message => {
 		const [attach] = message.attachments;
 		const name = attach.filename.substring(0, attach.filename.lastIndexOf("."));
 
-		if(!attach || !attach.height || !attach.width || !(/[A-Z0-9_]{2,32}/i).test(name)) {
+		if(!attach || !attach.height || !attach.width || !(/^[A-Z0-9_]{2,32}$/i).test(name)) {
 			await message.delete();
 			return;
 		}
@@ -104,7 +104,7 @@ bot.on("messageCreate", async message => {
 		});
 	} else if(message.channel.id === dataController.field("vote")) {
 		await message.delete();
-		const emoji = message.content.match(/<:[A-Z0-9_]{2,32}:(\d{14,20})>/i);
+		const emoji = message.content.match(/^<:[A-Z0-9_]{2,32}:(\d{14,20})>$/i);
 		if(!emoji) return;
 
 		const msg = await message.channel.createMessage(emoji[0]);
