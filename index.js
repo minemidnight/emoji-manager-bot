@@ -104,7 +104,7 @@ bot.on("messageCreate", async message => {
 		});
 	} else if(message.channel.id === dataController.field("vote")) {
 		await message.delete();
-		const emoji = message.content.match(/^<:[A-Z0-9_]{2,32}:(\d{14,20})>$/i);
+		const emoji = message.content.match(/<:[A-Z0-9_]{2,32}:(\d{14,20})>/i);
 		if(!emoji) return;
 
 		const msg = await message.channel.createMessage(emoji[0]);
